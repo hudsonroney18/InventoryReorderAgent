@@ -1,0 +1,9 @@
+row_number,sku,product_name,category,current_stock,reorder_point,max_stock,supplier_name,unit_cost,status,last_checked,notes
+1,SKU-1001,Heavy Duty Stretch Wrap,Packaging,0,100,500,PacSupply Co.,12.50,CRITICAL,4/1/2026 7:00:00,Stock fully depleted - immediate reorder required
+2,SKU-1002,Corrugated Shipping Boxes (12x12x12),Packaging,35,150,600,BoxWorld Inc.,3.75,REORDER,4/1/2026 7:00:00,Below reorder threshold - normal reorder cycle
+3,SKU-1003,Bubble Wrap Roll (12in x 175ft),Packaging,280,100,400,PacSupply Co.,18.00,OK,4/1/2026 7:00:00,Stock healthy
+4,SKU-1004,Packing Peanuts (20 cu ft bag),Void Fill,8,75,300,FillRight LLC,9.25,CRITICAL,4/1/2026 7:00:00,Less than 10% of reorder point - critical
+5,SKU-1005,Poly Mailers (10x13),Packaging,90,200,800,MailPro Supply,0.45,REORDER,4/1/2026 7:00:00,High-volume item below reorder point
+6,SKU-1006,Foam Corner Protectors,Protective,410,150,600,ShieldPack Ltd.,2.10,OK,4/1/2026 7:00:00,Stock healthy
+7,SKU-1007,Pallet Wrap Machine Film,Packaging,22,80,320,PacSupply Co.,47.00,REORDER,4/1/2026 7:00:00,Below reorder threshold
+8,SKU-1008,Kraft Paper Roll (30in x 900ft),Void Fill,0,60,240,FillRight LLC,31.50,CRITICAL,4/1/2026 7:00:00,Stock fully depleted

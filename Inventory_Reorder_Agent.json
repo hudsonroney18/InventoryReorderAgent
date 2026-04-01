@@ -1,0 +1,1523 @@
+{
+  "name": "Inventory Reorder Agent",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f1a2b3c4-d5e6-7890-abcd-ef1234567801",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "id": "a2b3c4d5-e6f7-8901-bcde-f12345678902",
+      "name": "Read Inventory Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this single inventory item and classify its stock status.\n\nrow_number: {{$json.row_number}}\nsku: {{$json.sku}}\nproduct_name: {{$json.product_name}}\ncategory: {{$json.category}}\ncurrent_stock: {{$json.current_stock}}\nreorder_point: {{$json.reorder_point}}\nmax_stock: {{$json.max_stock}}\nsupplier_name: {{$json.supplier_name}}\nunit_cost: {{$json.unit_cost}}\ncurrent status: {{$json.status}}\nlast_checked: {{$json.last_checked}}\nnotes: {{$json.notes}}\n\nReturn only valid JSON in the required format.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are InventoryAnalysisAgent.\n\nYour job is to evaluate a single inventory item and classify its stock status.\n\nClassification rules:\n- CRITICAL: current_stock is 0 OR current_stock is less than 10% of reorder_point. Immediate action required.\n- REORDER: current_stock is greater than 0 but at or below reorder_point. Order should be placed.\n- OK: current_stock is above reorder_point. No action needed.\n\nFor recommended_order_qty:\n- If CRITICAL or REORDER: calculate as max_stock minus current_stock.\n- If OK: set to 0.\n\nFor confidence: a number between 0 and 1 reflecting how clearly the item fits its classification.\n\nFor urgency_note: a short factual sentence explaining the situation (e.g. 'Stock at 0, immediate reorder required' or 'Stock 40% below reorder point').\n\nReturn strict JSON only matching the required schema."
+        }
+      },
+      "id": "b3c4d5e6-f7a8-9012-cdef-012345678903",
+      "name": "Analysis Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        512,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "c4d5e6f7-a8b9-0123-def0-123456789004",
+      "name": "OpenAI Chat Model (Analysis)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        224
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"required\": [\"sku\", \"product_name\", \"current_stock\", \"reorder_point\", \"stock_status\", \"recommended_order_qty\", \"urgency_note\", \"confidence\"],\n  \"properties\": {\n    \"sku\": { \"type\": \"string\" },\n    \"product_name\": { \"type\": \"string\" },\n    \"current_stock\": { \"type\": \"number\" },\n    \"reorder_point\": { \"type\": \"number\" },\n    \"stock_status\": {\n      \"type\": \"string\",\n      \"enum\": [\"CRITICAL\", \"REORDER\", \"OK\"]\n    },\n    \"recommended_order_qty\": { \"type\": \"number\" },\n    \"urgency_note\": { \"type\": \"string\" },\n    \"confidence\": {\n      \"type\": \"number\",\n      \"minimum\": 0,\n      \"maximum\": 1\n    }\n  }\n}"
+      },
+      "id": "d5e6f7a8-b9c0-1234-ef01-234567890005",
+      "name": "Analysis Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        752,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aa001111-0000-0000-0000-000000000001",
+              "leftValue": "={{$json.output.stock_status}}",
+              "rightValue": "CRITICAL",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e6f7a8b9-c0d1-2345-f012-345678900006",
+      "name": "If CRITICAL",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bb002222-0000-0000-0000-000000000002",
+              "leftValue": "={{$json.output.stock_status}}",
+              "rightValue": "REORDER",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f7a8b9c0-d1e2-3456-0123-456789000007",
+      "name": "If REORDER",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1008,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Flag this inventory item as CRITICAL and update the sheet.\n\nsku: {{$json.output.sku}}\nproduct_name: {{$json.output.product_name}}\ncurrent_stock: {{$json.output.current_stock}}\nreorder_point: {{$json.output.reorder_point}}\nurgency_note: {{$json.output.urgency_note}}\ncurrent_time: {{$now}}\n\nUse Get Inventory Row by SKU, then Update Inventory Row to mark CRITICAL.\nReturn only valid JSON in the required format.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are CriticalStockAgent.\n\nResponsibility:\nMark a critically low inventory item in Google Sheets.\n\nTools:\n1) Use 'Get Inventory Row (Critical)' to find the row by SKU.\n2) Use 'Update Inventory Row' to update the item's status and notes.\n\nCritical lookup rule:\n- Always find and target rows by SKU, never by row_number.\n\nUpdate only these columns:\n- status: set to CRITICAL\n- last_checked: current run time formatted as M/D/YYYY H:mm:ss\n- notes: short factual note explaining the critical stock situation\n\nDo not update:\n- row_number\n- sku\n- product_name\n- category\n- current_stock\n- reorder_point\n- max_stock\n- supplier_name\n- unit_cost\n\nIf SKU is not found, return action = NOT_FOUND.\n\nReturn strict JSON only matching the required schema."
+        }
+      },
+      "id": "a8b9c0d1-e2f3-4567-1234-567890000008",
+      "name": "CriticalStockAgent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1152,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "b9c0d1e2-f3a4-5678-2345-678900000009",
+      "name": "OpenAI Chat Model (Critical)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1088,
+        -144
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "id": "c0d1e2f3-a4b5-6789-3456-789000000010",
+      "name": "Get Inventory Row (Critical)",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1328,
+        -128
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "sku": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('sku__using_to_match_', ``, 'string') }}",
+            "product_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('product_name', ``, 'string') }}",
+            "category": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('category', ``, 'string') }}",
+            "current_stock": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('current_stock', ``, 'string') }}",
+            "reorder_point": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('reorder_point', ``, 'string') }}",
+            "max_stock": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('max_stock', ``, 'string') }}",
+            "supplier_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('supplier_name', ``, 'string') }}",
+            "unit_cost": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('unit_cost', ``, 'string') }}",
+            "status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('status', ``, 'string') }}",
+            "last_checked": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('last_checked', ``, 'string') }}",
+            "notes": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('notes', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "sku"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "current_stock",
+              "displayName": "current_stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reorder_point",
+              "displayName": "reorder_point",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "max_stock",
+              "displayName": "max_stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "supplier_name",
+              "displayName": "supplier_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "unit_cost",
+              "displayName": "unit_cost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_checked",
+              "displayName": "last_checked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "toolCallId",
+              "displayName": "toolCallId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d1e2f3a4-b5c6-7890-4567-890000000011",
+      "name": "Update Inventory Row",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1504,
+        -128
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"required\": [\"sku\", \"action\"],\n  \"properties\": {\n    \"sku\": { \"type\": \"string\" },\n    \"action\": { \"type\": \"string\" },\n    \"updated_status\": { \"type\": \"string\" },\n    \"notes\": { \"type\": \"string\" }\n  }\n}"
+      },
+      "id": "e2f3a4b5-c6d7-8901-5678-900000000012",
+      "name": "Critical Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1680,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a purchase order for this inventory item and update its status.\n\nsku: {{$json.output.sku}}\nproduct_name: {{$json.output.product_name}}\ncurrent_stock: {{$json.output.current_stock}}\nreorder_point: {{$json.output.reorder_point}}\nrecommended_order_qty: {{$json.output.recommended_order_qty}}\nurgency_note: {{$json.output.urgency_note}}\ncurrent_time: {{$now}}\n\nStep 1: Use 'Get Inventory Row (Reorder)' to look up full item details (supplier_name, unit_cost, max_stock) by SKU.\nStep 2: Use 'Append to Purchase Orders' to create a new PO row.\nStep 3: Use 'Update Inventory Status' to mark the inventory row as REORDER_PLACED.\nReturn only valid JSON in the required format.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are ReorderAgent.\n\nResponsibility:\nCreate a purchase order for an inventory item that has fallen to or below its reorder point, then update the inventory sheet to reflect that a reorder has been placed.\n\nTools (use in this order):\n1) 'Get Inventory Row (Reorder)' - read full row by SKU to get supplier_name, unit_cost, and max_stock.\n2) 'Append to Purchase Orders' - write one new row to the Purchase Orders sheet.\n3) 'Update Inventory Status' - update the inventory row to reflect REORDER_PLACED.\n\nPurchase Order row rules:\n- po_number: format as PO-{SKU}-{MMDDYYYY} using today's date\n- created_at: current run time in M/D/YYYY H:mm:ss\n- sku: from input\n- product_name: from inventory row\n- supplier_name: from inventory row\n- order_qty: recommended_order_qty from input (max_stock minus current_stock)\n- unit_cost: from inventory row\n- total_cost: order_qty multiplied by unit_cost\n- status: PENDING\n- expected_delivery: 7 days from today in M/D/YYYY format\n- notes: short note from urgency_note\n\nInventory update rules (Update Inventory Status tool):\n- Update only: status (set to REORDER_PLACED), last_checked (current time), notes (reference PO number)\n- Match by SKU\n- Do not change any other columns\n\nIf SKU is not found, return action = NOT_FOUND.\n\nReturn strict JSON only matching the required schema."
+        }
+      },
+      "id": "f3a4b5c6-d7e8-9012-6789-000000000013",
+      "name": "ReorderAgent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1312,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "a4b5c6d7-e8f9-0123-7890-000000000014",
+      "name": "OpenAI Chat Model (Reorder)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        288
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "id": "b5c6d7e8-f9a0-1234-8901-000000000015",
+      "name": "Get Inventory Row (Reorder)",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1504,
+        288
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "po_number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('po_number', ``, 'string') }}",
+            "created_at": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('created_at', ``, 'string') }}",
+            "sku": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('sku', ``, 'string') }}",
+            "product_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('product_name', ``, 'string') }}",
+            "supplier_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('supplier_name', ``, 'string') }}",
+            "order_qty": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('order_qty', ``, 'string') }}",
+            "unit_cost": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('unit_cost', ``, 'string') }}",
+            "total_cost": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('total_cost', ``, 'string') }}",
+            "status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('status', ``, 'string') }}",
+            "expected_delivery": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('expected_delivery', ``, 'string') }}",
+            "notes": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('notes', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "po_number",
+              "displayName": "po_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "supplier_name",
+              "displayName": "supplier_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_qty",
+              "displayName": "order_qty",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "unit_cost",
+              "displayName": "unit_cost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_cost",
+              "displayName": "total_cost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expected_delivery",
+              "displayName": "expected_delivery",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "toolCallId",
+              "displayName": "toolCallId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c6d7e8f9-a0b1-2345-9012-000000000016",
+      "name": "Append to Purchase Orders",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1712,
+        288
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "sku": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('sku__using_to_match_', ``, 'string') }}",
+            "product_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('product_name', ``, 'string') }}",
+            "category": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('category', ``, 'string') }}",
+            "current_stock": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('current_stock', ``, 'string') }}",
+            "reorder_point": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('reorder_point', ``, 'string') }}",
+            "max_stock": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('max_stock', ``, 'string') }}",
+            "supplier_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('supplier_name', ``, 'string') }}",
+            "unit_cost": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('unit_cost', ``, 'string') }}",
+            "status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('status', ``, 'string') }}",
+            "last_checked": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('last_checked', ``, 'string') }}",
+            "notes": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('notes', ``, 'string') }}",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "sku"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "current_stock",
+              "displayName": "current_stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reorder_point",
+              "displayName": "reorder_point",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "max_stock",
+              "displayName": "max_stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "supplier_name",
+              "displayName": "supplier_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "unit_cost",
+              "displayName": "unit_cost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_checked",
+              "displayName": "last_checked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "toolCallId",
+              "displayName": "toolCallId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d7e8f9a0-b1c2-3456-0123-000000000017",
+      "name": "Update Inventory Status",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1904,
+        288
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"required\": [\"sku\", \"action\"],\n  \"properties\": {\n    \"sku\": { \"type\": \"string\" },\n    \"po_number\": { \"type\": \"string\" },\n    \"order_qty\": { \"type\": \"number\" },\n    \"total_cost\": { \"type\": \"number\" },\n    \"action\": { \"type\": \"string\" }\n  }\n}"
+      },
+      "id": "e8f9a0b1-c2d3-4567-1234-000000000018",
+      "name": "Reorder Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1920,
+        128
+      ]
+    },
+    {
+      "id": "ri01-1111-0000-0000-000000000001",
+      "name": "Reset Test Data",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        700
+      ],
+      "parameters": {},
+      "notesInFlow": true,
+      "notes": "Resets all 8 inventory rows and clears Purchase Orders"
+    },
+    {
+      "id": "ri02-1111-0000-0000-000000000002",
+      "name": "Seed Inventory Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        250,
+        700
+      ],
+      "parameters": {
+        "jsCode": "return [\n  {json:{row_number:\"1\",sku:\"SKU-1001\",product_name:\"Heavy Duty Stretch Wrap\",category:\"Packaging\",current_stock:\"0\",reorder_point:\"100\",max_stock:\"500\",supplier_name:\"PacSupply Co.\",unit_cost:\"12.50\",status:\"CRITICAL\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock fully depleted - immediate reorder required\"}},\n  {json:{row_number:\"2\",sku:\"SKU-1002\",product_name:\"Corrugated Shipping Boxes (12x12x12)\",category:\"Packaging\",current_stock:\"35\",reorder_point:\"150\",max_stock:\"600\",supplier_name:\"BoxWorld Inc.\",unit_cost:\"3.75\",status:\"REORDER\",last_checked:\"4/1/2026 7:00:00\",notes:\"Below reorder threshold - normal reorder cycle\"}},\n  {json:{row_number:\"3\",sku:\"SKU-1003\",product_name:\"Bubble Wrap Roll (12in x 175ft)\",category:\"Packaging\",current_stock:\"280\",reorder_point:\"100\",max_stock:\"400\",supplier_name:\"PacSupply Co.\",unit_cost:\"18.00\",status:\"OK\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock healthy\"}},\n  {json:{row_number:\"4\",sku:\"SKU-1004\",product_name:\"Packing Peanuts (20 cu ft bag)\",category:\"Void Fill\",current_stock:\"8\",reorder_point:\"75\",max_stock:\"300\",supplier_name:\"FillRight LLC\",unit_cost:\"9.25\",status:\"CRITICAL\",last_checked:\"4/1/2026 7:00:00\",notes:\"Less than 10% of reorder point - critical\"}},\n  {json:{row_number:\"5\",sku:\"SKU-1005\",product_name:\"Poly Mailers (10x13)\",category:\"Packaging\",current_stock:\"90\",reorder_point:\"200\",max_stock:\"800\",supplier_name:\"MailPro Supply\",unit_cost:\"0.45\",status:\"REORDER\",last_checked:\"4/1/2026 7:00:00\",notes:\"High-volume item below reorder point\"}},\n  {json:{row_number:\"6\",sku:\"SKU-1006\",product_name:\"Foam Corner Protectors\",category:\"Protective\",current_stock:\"410\",reorder_point:\"150\",max_stock:\"600\",supplier_name:\"ShieldPack Ltd.\",unit_cost:\"2.10\",status:\"OK\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock healthy\"}},\n  {json:{row_number:\"7\",sku:\"SKU-1007\",product_name:\"Pallet Wrap Machine Film\",category:\"Packaging\",current_stock:\"22\",reorder_point:\"80\",max_stock:\"320\",supplier_name:\"PacSupply Co.\",unit_cost:\"47.00\",status:\"REORDER\",last_checked:\"4/1/2026 7:00:00\",notes:\"Below reorder threshold\"}},\n  {json:{row_number:\"8\",sku:\"SKU-1008\",product_name:\"Kraft Paper Roll (30in x 900ft)\",category:\"Void Fill\",current_stock:\"0\",reorder_point:\"60\",max_stock:\"240\",supplier_name:\"FillRight LLC\",unit_cost:\"31.50\",status:\"CRITICAL\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock fully depleted\"}}\n];"
+      }
+    },
+    {
+      "id": "ri03-1111-0000-0000-000000000003",
+      "name": "Reset Inventory Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        500,
+        700
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "current_stock",
+              "displayName": "current_stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reorder_point",
+              "displayName": "reorder_point",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "max_stock",
+              "displayName": "max_stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "supplier_name",
+              "displayName": "supplier_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "unit_cost",
+              "displayName": "unit_cost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_checked",
+              "displayName": "last_checked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ri04-1111-0000-0000-000000000004",
+      "name": "Clear Purchase Orders",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        750,
+        700
+      ],
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        }
+      }
+    },
+    {
+      "id": "ri05-1111-0000-0000-000000000005",
+      "name": "PO Header Seed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        700
+      ],
+      "parameters": {
+        "jsCode": "return [{json:{po_number:\"\",created_at:\"\",sku:\"\",product_name:\"\",supplier_name:\"\",order_qty:\"\",unit_cost:\"\",total_cost:\"\",status:\"\",expected_delivery:\"\",notes:\"\"}}];"
+      }
+    },
+    {
+      "id": "ri06-1111-0000-0000-000000000006",
+      "name": "Restore PO Headers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1250,
+        700
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "po_number",
+              "displayName": "po_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sku",
+              "displayName": "sku",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "supplier_name",
+              "displayName": "supplier_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "order_qty",
+              "displayName": "order_qty",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "unit_cost",
+              "displayName": "unit_cost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_cost",
+              "displayName": "total_cost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expected_delivery",
+              "displayName": "expected_delivery",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Read Inventory Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Inventory Sheet": {
+      "main": [
+        [
+          {
+            "node": "Analysis Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analysis Agent": {
+      "main": [
+        [
+          {
+            "node": "If CRITICAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Analysis)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analysis Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analysis Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analysis Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If CRITICAL": {
+      "main": [
+        [
+          {
+            "node": "CriticalStockAgent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If REORDER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If REORDER": {
+      "main": [
+        [
+          {
+            "node": "ReorderAgent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "OpenAI Chat Model (Critical)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CriticalStockAgent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Inventory Row (Critical)": {
+      "ai_tool": [
+        [
+          {
+            "node": "CriticalStockAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Inventory Row": {
+      "ai_tool": [
+        [
+          {
+            "node": "CriticalStockAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Critical Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "CriticalStockAgent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Reorder)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ReorderAgent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Inventory Row (Reorder)": {
+      "ai_tool": [
+        [
+          {
+            "node": "ReorderAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Purchase Orders": {
+      "ai_tool": [
+        [
+          {
+            "node": "ReorderAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Inventory Status": {
+      "ai_tool": [
+        [
+          {
+            "node": "ReorderAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reorder Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "ReorderAgent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset Test Data": {
+      "main": [
+        [
+          {
+            "node": "Seed Inventory Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seed Inventory Data": {
+      "main": [
+        [
+          {
+            "node": "Reset Inventory Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset Inventory Rows": {
+      "main": [
+        [
+          {
+            "node": "Clear Purchase Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Purchase Orders": {
+      "main": [
+        [
+          {
+            "node": "PO Header Seed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PO Header Seed": {
+      "main": [
+        [
+          {
+            "node": "Restore PO Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "pinData": {}
+}
