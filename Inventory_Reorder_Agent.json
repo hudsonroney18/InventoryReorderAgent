@@ -924,187 +924,32 @@
       ]
     },
     {
+      "parameters": {},
       "id": "ri01-1111-0000-0000-000000000001",
       "name": "Reset Test Data",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
         0,
-        700
+        704
       ],
-      "parameters": {},
       "notesInFlow": true,
       "notes": "Resets all 8 inventory rows and clears Purchase Orders"
     },
     {
+      "parameters": {
+        "jsCode": "return [\n  {json:{row_number:\"1\",sku:\"SKU-1001\",product_name:\"Heavy Duty Stretch Wrap\",category:\"Packaging\",current_stock:\"0\",reorder_point:\"100\",max_stock:\"500\",supplier_name:\"PacSupply Co.\",unit_cost:\"12.50\",status:\"CRITICAL\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock fully depleted - immediate reorder required\"}},\n  {json:{row_number:\"2\",sku:\"SKU-1002\",product_name:\"Corrugated Shipping Boxes (12x12x12)\",category:\"Packaging\",current_stock:\"35\",reorder_point:\"150\",max_stock:\"600\",supplier_name:\"BoxWorld Inc.\",unit_cost:\"3.75\",status:\"REORDER\",last_checked:\"4/1/2026 7:00:00\",notes:\"Below reorder threshold - normal reorder cycle\"}},\n  {json:{row_number:\"3\",sku:\"SKU-1003\",product_name:\"Bubble Wrap Roll (12in x 175ft)\",category:\"Packaging\",current_stock:\"280\",reorder_point:\"100\",max_stock:\"400\",supplier_name:\"PacSupply Co.\",unit_cost:\"18.00\",status:\"OK\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock healthy\"}},\n  {json:{row_number:\"4\",sku:\"SKU-1004\",product_name:\"Packing Peanuts (20 cu ft bag)\",category:\"Void Fill\",current_stock:\"8\",reorder_point:\"75\",max_stock:\"300\",supplier_name:\"FillRight LLC\",unit_cost:\"9.25\",status:\"CRITICAL\",last_checked:\"4/1/2026 7:00:00\",notes:\"Less than 10% of reorder point - critical\"}},\n  {json:{row_number:\"5\",sku:\"SKU-1005\",product_name:\"Poly Mailers (10x13)\",category:\"Packaging\",current_stock:\"90\",reorder_point:\"200\",max_stock:\"800\",supplier_name:\"MailPro Supply\",unit_cost:\"0.45\",status:\"REORDER\",last_checked:\"4/1/2026 7:00:00\",notes:\"High-volume item below reorder point\"}},\n  {json:{row_number:\"6\",sku:\"SKU-1006\",product_name:\"Foam Corner Protectors\",category:\"Protective\",current_stock:\"410\",reorder_point:\"150\",max_stock:\"600\",supplier_name:\"ShieldPack Ltd.\",unit_cost:\"2.10\",status:\"OK\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock healthy\"}},\n  {json:{row_number:\"7\",sku:\"SKU-1007\",product_name:\"Pallet Wrap Machine Film\",category:\"Packaging\",current_stock:\"22\",reorder_point:\"80\",max_stock:\"320\",supplier_name:\"PacSupply Co.\",unit_cost:\"47.00\",status:\"REORDER\",last_checked:\"4/1/2026 7:00:00\",notes:\"Below reorder threshold\"}},\n  {json:{row_number:\"8\",sku:\"SKU-1008\",product_name:\"Kraft Paper Roll (30in x 900ft)\",category:\"Void Fill\",current_stock:\"0\",reorder_point:\"60\",max_stock:\"240\",supplier_name:\"FillRight LLC\",unit_cost:\"31.50\",status:\"CRITICAL\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock fully depleted\"}}\n];"
+      },
       "id": "ri02-1111-0000-0000-000000000002",
       "name": "Seed Inventory Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        250,
-        700
-      ],
-      "parameters": {
-        "jsCode": "return [\n  {json:{row_number:\"1\",sku:\"SKU-1001\",product_name:\"Heavy Duty Stretch Wrap\",category:\"Packaging\",current_stock:\"0\",reorder_point:\"100\",max_stock:\"500\",supplier_name:\"PacSupply Co.\",unit_cost:\"12.50\",status:\"CRITICAL\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock fully depleted - immediate reorder required\"}},\n  {json:{row_number:\"2\",sku:\"SKU-1002\",product_name:\"Corrugated Shipping Boxes (12x12x12)\",category:\"Packaging\",current_stock:\"35\",reorder_point:\"150\",max_stock:\"600\",supplier_name:\"BoxWorld Inc.\",unit_cost:\"3.75\",status:\"REORDER\",last_checked:\"4/1/2026 7:00:00\",notes:\"Below reorder threshold - normal reorder cycle\"}},\n  {json:{row_number:\"3\",sku:\"SKU-1003\",product_name:\"Bubble Wrap Roll (12in x 175ft)\",category:\"Packaging\",current_stock:\"280\",reorder_point:\"100\",max_stock:\"400\",supplier_name:\"PacSupply Co.\",unit_cost:\"18.00\",status:\"OK\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock healthy\"}},\n  {json:{row_number:\"4\",sku:\"SKU-1004\",product_name:\"Packing Peanuts (20 cu ft bag)\",category:\"Void Fill\",current_stock:\"8\",reorder_point:\"75\",max_stock:\"300\",supplier_name:\"FillRight LLC\",unit_cost:\"9.25\",status:\"CRITICAL\",last_checked:\"4/1/2026 7:00:00\",notes:\"Less than 10% of reorder point - critical\"}},\n  {json:{row_number:\"5\",sku:\"SKU-1005\",product_name:\"Poly Mailers (10x13)\",category:\"Packaging\",current_stock:\"90\",reorder_point:\"200\",max_stock:\"800\",supplier_name:\"MailPro Supply\",unit_cost:\"0.45\",status:\"REORDER\",last_checked:\"4/1/2026 7:00:00\",notes:\"High-volume item below reorder point\"}},\n  {json:{row_number:\"6\",sku:\"SKU-1006\",product_name:\"Foam Corner Protectors\",category:\"Protective\",current_stock:\"410\",reorder_point:\"150\",max_stock:\"600\",supplier_name:\"ShieldPack Ltd.\",unit_cost:\"2.10\",status:\"OK\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock healthy\"}},\n  {json:{row_number:\"7\",sku:\"SKU-1007\",product_name:\"Pallet Wrap Machine Film\",category:\"Packaging\",current_stock:\"22\",reorder_point:\"80\",max_stock:\"320\",supplier_name:\"PacSupply Co.\",unit_cost:\"47.00\",status:\"REORDER\",last_checked:\"4/1/2026 7:00:00\",notes:\"Below reorder threshold\"}},\n  {json:{row_number:\"8\",sku:\"SKU-1008\",product_name:\"Kraft Paper Roll (30in x 900ft)\",category:\"Void Fill\",current_stock:\"0\",reorder_point:\"60\",max_stock:\"240\",supplier_name:\"FillRight LLC\",unit_cost:\"31.50\",status:\"CRITICAL\",last_checked:\"4/1/2026 7:00:00\",notes:\"Stock fully depleted\"}}\n];"
-      }
+        256,
+        704
+      ]
     },
     {
-      "id": "ri03-1111-0000-0000-000000000003",
-      "name": "Reset Inventory Rows",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        500,
-        700
-      ],
-      "parameters": {
-        "operation": "update",
-        "documentId": {
-          "__rl": true,
-          "value": "",
-          "mode": "list",
-          "cachedResultName": "",
-          "cachedResultUrl": ""
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "",
-          "mode": "list",
-          "cachedResultName": "",
-          "cachedResultUrl": ""
-        },
-        "columns": {
-          "mappingMode": "autoMapInputData",
-          "value": {},
-          "matchingColumns": [
-            "row_number"
-          ],
-          "schema": [
-            {
-              "id": "row_number",
-              "displayName": "row_number",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "sku",
-              "displayName": "sku",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "product_name",
-              "displayName": "product_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "category",
-              "displayName": "category",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "current_stock",
-              "displayName": "current_stock",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "reorder_point",
-              "displayName": "reorder_point",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "max_stock",
-              "displayName": "max_stock",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "supplier_name",
-              "displayName": "supplier_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "unit_cost",
-              "displayName": "unit_cost",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "status",
-              "displayName": "status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "last_checked",
-              "displayName": "last_checked",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "notes",
-              "displayName": "notes",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "ri04-1111-0000-0000-000000000004",
-      "name": "Clear Purchase Orders",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        750,
-        700
-      ],
       "parameters": {
         "operation": "clear",
         "documentId": {
@@ -1121,30 +966,36 @@
           "cachedResultName": "",
           "cachedResultUrl": ""
         }
+      },
+      "id": "ri04-1111-0000-0000-000000000004",
+      "name": "Clear Purchase Orders",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        752,
+        704
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
+      "parameters": {
+        "jsCode": "return [{json:{po_number:\"\",created_at:\"\",sku:\"\",product_name:\"\",supplier_name:\"\",order_qty:\"\",unit_cost:\"\",total_cost:\"\",status:\"\",expected_delivery:\"\",notes:\"\"}}];"
+      },
       "id": "ri05-1111-0000-0000-000000000005",
       "name": "PO Header Seed",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1000,
-        700
-      ],
-      "parameters": {
-        "jsCode": "return [{json:{po_number:\"\",created_at:\"\",sku:\"\",product_name:\"\",supplier_name:\"\",order_qty:\"\",unit_cost:\"\",total_cost:\"\",status:\"\",expected_delivery:\"\",notes:\"\"}}];"
-      }
+        1008,
+        704
+      ]
     },
     {
-      "id": "ri06-1111-0000-0000-000000000006",
-      "name": "Restore PO Headers",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        1250,
-        700
-      ],
       "parameters": {
         "operation": "append",
         "documentId": {
@@ -1270,6 +1121,98 @@
           "convertFieldsToString": false
         },
         "options": {}
+      },
+      "id": "ri06-1111-0000-0000-000000000006",
+      "name": "Restore PO Headers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1264,
+        704
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "clear-inventory-sheet-001",
+      "name": "Clear Inventory Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        512,
+        704
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      },
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "restore-inventory-data-001",
+      "name": "Restore Inventory Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        632,
+        704
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      },
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "headerRow": 1
+        }
       }
     }
   ],
@@ -1473,18 +1416,7 @@
       "main": [
         [
           {
-            "node": "Reset Inventory Rows",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Reset Inventory Rows": {
-      "main": [
-        [
-          {
-            "node": "Clear Purchase Orders",
+            "node": "Clear Inventory Sheet",
             "type": "main",
             "index": 0
           }
@@ -1507,6 +1439,28 @@
         [
           {
             "node": "Restore PO Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Inventory Sheet": {
+      "main": [
+        [
+          {
+            "node": "Restore Inventory Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Inventory Data": {
+      "main": [
+        [
+          {
+            "node": "Clear Purchase Orders",
             "type": "main",
             "index": 0
           }
