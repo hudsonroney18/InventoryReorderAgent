@@ -328,6 +328,23 @@ Every agent in this workflow has a **Structured Output Parser** attached. This e
 
 ---
 
+## Resetting Test Data
+
+The workflow includes a built-in **Reset Test Data** sub-workflow that restores both Google Sheet tabs to their original seed state in one click. This is useful when you want to re-run the workflow after agents have already updated statuses and written PO rows.
+
+**How to use it:**
+1. In n8n, locate the **Reset Test Data** manual trigger node on your canvas (it sits separately from the main workflow).
+2. Click **Execute** on that trigger node only.
+3. The workflow runs in sequence:
+   - Clears and reseeds the **Inventory** tab back to all 8 original rows with their original `status`, `current_stock`, and `notes`
+   - Clears the **PurchaseOrders** tab and restores the column headers
+
+> You must also connect your Google Sheets credential and select the correct sheet/tab on the 3 reset nodes (`Clear Inventory Sheet`, `Restore Inventory Data`, `Clear Purchase Orders`, `Restore PO Headers`) the same way you do for the main workflow nodes.
+
+> After the reset, both sheets are back to their clean starting state and you can run the main workflow again.
+
+---
+
 ## Running a Test
 
 ### 1. Prepare Your Sheet
@@ -430,6 +447,7 @@ If you finish early or want a challenge, consider one or more of these extension
 InventoryReorderAgent/
 ├── README.md                          ← You are here
 ├── Inventory_Reorder_Agent.json       ← n8n workflow template to import
+│                                          (includes Reset Test Data sub-workflow)
 ├── data/
 │   └── inventory.csv                  ← Seed data for your Inventory Google Sheet tab
 ├── scenarios/
